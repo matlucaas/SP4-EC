@@ -2,13 +2,13 @@
 #include "EspMQTTClient.h"  // Lib to comunicate MQTT from ESP
 
 // Define os pinos do LED RGB
-const int pinoR = 10;  // Pino para o LED vermelho
-const int pinoG = 11; // Pino para o LED verde
-const int pinoB = 9; // Pino para o LED azul
-const int pinoBotao = 12; // Pino para o botão
+const int pinoR = 13;  // Pino para o LED vermelho
+const int pinoG = 12; // Pino para o LED verde
+const int pinoB = 14; // Pino para o LED azul
+const int pinoBotao = 25; // Pino para o botão
 int buttonState = 0;
 int verificarBotao = 0;
-const int buzzer = 7;
+const int buzzer = 23;
 unsigned long tempoInicio; // Tempo desde que o programa começou usando a função millis()
 unsigned long tempoFoco = 30000; // Tempo de duração do foco - 30 segundos
 unsigned long tempoDescanso = 10000; // Tempo de duração do descanso inicial - 10 segundos;
@@ -19,8 +19,8 @@ float valorBotaoPressionado = 0;
 
 EspMQTTClient client
 (
-  "WiFI",                //nome da sua rede Wi-Fi
-  "2153818aa",           //senha da sua rede Wi-Fi
+  "Wokwi-GUEST",                //nome da sua rede Wi-Fi
+  "",           //senha da sua rede Wi-Fi
   "mqtt.tago.io",       //Endereço do servidor MQTT
   "Default",            //User é sempre default pois vamos usar token
   "2fd007b0-7978-4d12-8444-1e4bb3013479",              // Código do Token
@@ -30,11 +30,18 @@ EspMQTTClient client
 
 void setup() {
   Serial.begin(9600);
+
   pinMode(pinoR, OUTPUT);
   pinMode(pinoG, OUTPUT);
   pinMode(pinoB, OUTPUT);
+  ledcAttachPin(buzzer, 0);
   pinMode(pinoBotao, INPUT_PULLUP);
   pinMode(buzzer, OUTPUT);
+
+  analogWrite(pinoR, 255);
+  analogWrite(pinoG, 0);
+  analogWrite(pinoB, 0);
+
   Serial.println("Conectando WiFi");
   while(!client.isWifiConnected()){
     Serial.print('.');
@@ -56,9 +63,9 @@ void onConnectionEstablished()
 {}
 
 void azul(){
-  analogWrite(pinoR,220);
-  analogWrite(pinoG,220);
-  analogWrite(pinoB,255);
+   analogWrite(pinoR, 0);
+  analogWrite(pinoG, 0);
+  analogWrite(pinoB, 255);
 }
 
 void loop() {
@@ -70,7 +77,6 @@ void loop() {
     // Tempo de duração da etapa de foco
     if(verificarBotao >= 1){
       // Envia os dados para a nuvem
-      valorBotaoPressionado += 1;
       StaticJsonDocument<300> documentoJson;
       documentoJson["variable"] = "valorBotaoPressionado";
       documentoJson["value"] = valorBotaoPressionado;
@@ -81,6 +87,7 @@ void loop() {
       client.publish("topicoSPRINT4", apertaBotaoJson);
       client.loop(); 
       Serial.print("Dados enviados para a nuvem.");
+      valorBotaoPressionado += 1;
       indiceDescanso += 1;
     }
     
